@@ -1,12 +1,36 @@
 import numpy as np
+from time import sleep
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.optimizers import Adam
+
+# Check for nan values in the inputted numpy matrices
+
+for i in range(1, 49):
+  file_path = f'hexagon{i}.npy'
+  matrix = np.load(file_path)
+  dimensions = matrix.shape
+  for i in range(0, dimensions[0]):
+    for j in range(0, 7):
+      if np.isnan(matrix[i, j]):
+        print(f"Found it!!!!! Null value in {file_path}, position ({i}, {j})")
+        sleep(.2)
+
+for i in range(1, 51):
+  file_path = f'cylinder{i}.npy'
+  matrix = np.load(file_path)
+  dimensions = matrix.shape
+  for i in range(0, dimensions[0]):
+    for j in range(0, 7):
+      if np.isnan(matrix[i, j]):
+        print(f"Found it!!!!! Null value in {file_path}, position ({i}, {j})")
+        sleep(.2)
 
 # Load the data
-cylinder_data = [np.load(f'cylinder{i}.npy') for i in range(1, 31)]
-hexagon_data = [np.load(f'hexagon{i}.npy') for i in range(1, 31)]
+cylinder_data = [np.load(f'cylinder{i}.npy') for i in range(1, 51)]
+hexagon_data = [np.load(f'hexagon{i}.npy') for i in range(1, 49)]
 
 # Combine the data and create corresponding labels
 X = np.concatenate((cylinder_data, hexagon_data))
@@ -33,7 +57,7 @@ X_test_normalized = np.array(X_test_normalized)
 
 
 # Process the data into subsequences of length 18
-buffer_length = 400
+buffer_length = 50
 stride = 1
 X_train_subsequences = []
 y_train_subsequences = []
@@ -66,8 +90,11 @@ model = Sequential()
 model.add(LSTM(64, input_shape=(buffer_length, X_train_subsequences.shape[2])))
 model.add(Dense(1, activation='sigmoid'))
 
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-model.fit(X_train_subsequences, y_train_subsequences, epochs=10)
+learning_rate = 0.0001  # Adjust this value to control the learning rate
+
+optimizer = Adam(learning_rate=learning_rate)  # Set the learning_rate parameter in the optimizer
+model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+model.fit(X_train_subsequences, y_train_subsequences, epochs=3)
 
 # Evaluate the model
 loss, accuracy = model.evaluate(X_test_subsequences, y_test_subsequences)
