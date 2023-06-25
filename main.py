@@ -86,6 +86,7 @@ X_test_subsequences = np.array(X_test_subsequences)
 y_test_subsequences = np.array(y_test_subsequences)
 
 from tensorflow.keras.callbacks import EarlyStopping
+import matplotlib.pyplot as plt
 
 # Build and train the LSTM model with Early Stopping
 model = Sequential()
@@ -101,11 +102,18 @@ model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accurac
 early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
 
 # Fit the model with EarlyStopping callback
-model.fit(X_train_subsequences, y_train_subsequences, epochs=100, validation_split=0.2, callbacks=[early_stopping])
+history = model.fit(X_train_subsequences, y_train_subsequences, epochs=100, validation_split=0.2, callbacks=[early_stopping])
 
 # Evaluate the model
 loss, accuracy = model.evaluate(X_test_subsequences, y_test_subsequences)
 print(f'Test Loss: {loss:.4f}')
 print(f'Test Accuracy: {accuracy:.4f}')
 
-
+# Plot the training loss versus validation loss
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Training Loss vs. Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
