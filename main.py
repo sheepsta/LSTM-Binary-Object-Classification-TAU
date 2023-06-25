@@ -85,18 +85,27 @@ y_train_subsequences = np.array(y_train_subsequences)
 X_test_subsequences = np.array(X_test_subsequences)
 y_test_subsequences = np.array(y_test_subsequences)
 
-# Build and train the LSTM model
+from tensorflow.keras.callbacks import EarlyStopping
+
+# Build and train the LSTM model with Early Stopping
 model = Sequential()
-model.add(LSTM(64, input_shape=(buffer_length, X_train_subsequences.shape[2])))
+model.add(LSTM(64, input_shape=(buffer_length, X_train_subsequences.shape[2]), return_sequences=True))
+model.add(LSTM(64))
 model.add(Dense(1, activation='sigmoid'))
 
-learning_rate = 0.0001  # Adjust this value to control the learning rate
-
-optimizer = Adam(learning_rate=learning_rate)  # Set the learning_rate parameter in the optimizer
+learning_rate = 0.0001
+optimizer = Adam(learning_rate=learning_rate)
 model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
-model.fit(X_train_subsequences, y_train_subsequences, epochs=3)
+
+# Define EarlyStopping callback
+early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+
+# Fit the model with EarlyStopping callback
+model.fit(X_train_subsequences, y_train_subsequences, epochs=100, validation_split=0.2, callbacks=[early_stopping])
 
 # Evaluate the model
 loss, accuracy = model.evaluate(X_test_subsequences, y_test_subsequences)
 print(f'Test Loss: {loss:.4f}')
 print(f'Test Accuracy: {accuracy:.4f}')
+
+
